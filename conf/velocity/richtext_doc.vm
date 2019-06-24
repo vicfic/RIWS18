@@ -1,0 +1,230 @@
+#**
+ *  Render a complex document in the results list
+ *#
+
+## Load Mime-Type List and Mapping
+#parse('mime_type_lists.vm')
+## Sets:
+## * supportedMimeTypes, AKA supportedtypes
+## * mimeExtensionsMap, AKA extMap
+
+## Title
+#if($doc.getFieldValue('title'))
+  #set($title = $esc.html($doc.getFirstValue('title')))
+#else
+  #set($title = "["+$doc.getFieldValue('id')+"]")
+#end
+
+## URL
+#if($doc.getFieldValue('url'))
+  #set($url = $doc.getFieldValue('url'))
+#elseif($doc.getFieldValue('resourcename'))
+  #set($url = "file:///$doc.getFieldValue('resourcename')")
+#else
+  #set($url = "$doc.getFieldValue('id')")
+#end
+
+## Sort out Mime-Type
+#set($ct = $list.get($doc.getFirstValue('content_type').split(";"),0))
+#set($filename = $doc.getFieldValue('resourcename'))
+#set($filetype = false)
+#set($filetype = $mimeExtensionsMap.get($ct))
+
+## TODO: falling back to file extension is convenient,
+## except when you don't have an icon for that extension
+## example "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+## document with a .docx extension.
+## It'd be nice to fall back to an "unknown" or the existing "file" type
+## We sort of do this below, but only if the filename has no extension
+## (anything after the last dot).
+
+#if(!$filetype)
+  #set($filetype = $filename.substring($filename.lastIndexOf(".")).substring(1))
+#end
+
+## #if(!$filetype)
+##   #set($filetype = "file")
+## #end
+## #if(!$supportedMimeTypes.contains($filetype))
+##   #set($filetype = "file")
+## #end
+
+## Row 1: Icon and Title and mlt link
+<div class="result-title">
+  ## Icon
+  ## Small file type icons from http://www.splitbrain.org/projects/file_icons (public domain)
+
+  <!-- CARTEL DE LA COMPETICIÓN-->
+  <div align="center">
+  #if($doc.getFieldValue('cartel'))
+    <img src="$doc.getFieldValue('cartel')" align="center">
+  #else
+    <img src="https://www.howdeniberia.com/wp-content/uploads/2017/03/Carreras-populares-y-evento-768x458.gif" align="center">
+  #end
+  </div>
+  </br> </br> </br>
+  <!-- TÍTULO -->
+  <!-- <p>$doc.getFieldValue('nombre')</p> -->
+<table style="width:130%; table-layout: fixed;" align="center">
+  <tr align="center">
+    <td>$doc.getFieldValue('nombre')</td>
+    <td>  
+      <a href="$doc.getFieldValue('paginaWeb')">
+        <abbr title="Ir a la p&aacute;gina oficial de la competici&oacute;n">
+                    <img src="https://www.roohanrealty.com/wp-content/uploads/2018/10/go-to-web-icon-vector-10610581-c.png" alt="HTML tutorial" style="width:42px;height:42px;border:0;">
+        </abbr>
+      </a>
+    </td>
+  </tr>
+</table>
+
+
+  <p style="font-size:120%;">$doc.getFieldValue('descripcion')</p>
+
+
+
+  <!-- <a href="$doc.getFieldValue('paginaWeb')">P&aacute;gina web del evento</a> -->
+
+<table style="width:50%; table-layout: fixed;" align="center">
+  <caption><h3>Detalles competici&oacute;n</h3></caption>
+  <tr align="center">
+    #if ($doc.getFieldValue('comunidad'))
+      <td style="background-color:#bbb;">Provincia</td> 
+    #end
+    <td style="background-color:#bbb;">Provincia</td>    
+    <td style="background-color:#bbb;">Modalidad</td> 
+    <td style="background-color:#bbb;">Num. participantes</td>
+     <td style="background-color:#bbb;">Distancia (Km)</td>
+    #if ($doc.getFieldValue('lugar'))
+      <td style="background-color:#bbb;">Lugar</td> 
+    #end
+    #if ($doc.getFieldValue('organizador'))
+      <td style="background-color:#bbb;">Organizador</td> 
+    #end
+  </tr>
+  <tr align="center">
+    #if ($doc.getFieldValue('comunidad'))
+      <td>$doc.getFieldValue('comunidad')</td>
+    #end
+    <td>$doc.getFieldValue('provincia')</td>
+    <td>$doc.getFieldValue('modalidad')</td>
+    #if($doc.getFieldValue('numParticipantes'))
+      <td>$doc.getFieldValue('numParticipantes')</td>
+    #else
+        <td>0</td>
+    #end
+    <td>$doc.getFieldValue('distancia')</td>
+    #if ($doc.getFieldValue('lugar'))
+      <td>$doc.getFieldValue('lugar')</td>
+    #end
+    #if ($doc.getFieldValue('organizador'))
+      <td>$doc.getFieldValue('organizador')</td>
+    #end
+    
+  </tr>
+</table>
+
+      <a href="${url}">
+        <abbr title="Ir a la p&aacute;gina crawleada">
+          <img src="https://cdn4.iconfinder.com/data/icons/flat-seo-icons/48/web-crawler-512.png" alt="HTML tutorial" style="width:42px;height:42px;border:0;">
+        </abbr>
+      </a>
+
+
+
+  ## Title, hyperlinked
+ <!-- <a href="${url}" target="_blank"> 
+    <b>$title</b></a>-->
+</br></br>
+  ## Link for MLT / More Like This / Find Similar
+  <span class="mlt">
+    #if($params.getBool('mlt', false) == false)
+      <a href="#lensNoQ&q=id:%22$docId%22&mlt=true">
+        More Like This</a>
+    #end
+  </span>
+
+</div>
+
+## Row 2?: ID / URL
+<div>
+  <!-- Id: #field('id')-->
+</div>
+
+## Resource Name
+<div>
+  #if($doc.getFieldValue('resourcename'))
+    Resource name: $filename 
+  #elseif($url)
+    <!-- URL: $url -->
+  #end
+  #if($ct)
+    ($ct)
+  #end
+</div>
+
+## Author
+#if($doc.getFieldValue('author'))
+  <div>
+    Author: #field('author')
+  </div>
+#end
+
+## Last_Modified Date
+#if($doc.getFieldValue('last_modified'))
+  <div>
+    last-modified:
+    #field('last_modified')
+  </div>
+#end
+
+## Main content of doc
+<div class="result-body">
+  #field('content')
+</div>
+
+## Display Similar Documents / MLT = More Like This
+<div class="mlt">
+  #set($mlt = $mltResults.get($docId))
+  #set($mltOn = $params.getBool('mlt'))
+  #if($mltOn == true)
+    <div class="field-name">
+      Similar Items
+    </div>
+  #end
+  ## If has MLT enabled An Entries to show
+  #if ($mltOn && $mlt && $mlt.size() > 0)
+    <ul>
+      #foreach($mltHit in $mlt)
+        #set($mltId = $mltHit.getFieldValue('id'))
+        <li>
+          <div>
+            <a href="#url_for_home?q=id:$mltId">
+              $mltId</a>
+          </div>
+          <div>
+            <span class="field-name">
+              Nombre:
+            </span>
+            $mltHit.getFieldValue('nombre')
+          </div>
+          <div>
+            <span class="field-name">
+              Distancia:
+            </span>
+            $mltHit.getFieldValue('distancia')
+            <span class="field-name">
+              Fecha:
+            </span>
+            $mltHit.getFieldValue('fecha')
+          </div>
+        </li>
+      #end    ## end for each mltHit in $mlt
+    </ul>
+  ## Else MLT Enabled but no mlt results for this query
+  #elseif($mltOn && $mlt.size() == 0)
+    <div>No Similar Items Found</div>
+  #end
+</div>  ## div class=mlt
+
+#parse('debug.vm')
